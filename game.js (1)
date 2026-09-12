@@ -1,0 +1,109 @@
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* ---------- Header: sombra/fundo ao rolar ---------- */
+  const header = document.getElementById('siteHeader');
+  const onScroll = () => {
+    if (window.scrollY > 24) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
+  };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  /* ---------- Menu mobile ---------- */
+  const menuToggle = document.getElementById('menuToggle');
+  const mainNav = document.getElementById('mainNav');
+
+  const closeMenu = () => {
+    mainNav.classList.remove('open');
+    menuToggle.setAttribute('aria-expanded', 'false');
+  };
+
+  menuToggle.addEventListener('click', () => {
+    const isOpen = mainNav.classList.toggle('open');
+    menuToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  mainNav.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', closeMenu);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMenu();
+  });
+
+  /* ---------- Carrossel da galeria (arrastar para ver) ---------- */
+  const track = document.getElementById('galleryTrack');
+  const prevBtn = document.getElementById('galleryPrev');
+  const nextBtn = document.getElementById('galleryNext');
+
+  if (track) {
+    let isDragging = false;
+    let startX = 0;
+    let startScroll = 0;
+    let moved = false;
+
+    const startDrag = (pageX) => {
+      isDragging = true;
+      moved = false;
+      startX = pageX;
+      startScroll = track.scrollLeft;
+      track.classList.add('dragging');
+    };
+    const duringDrag = (pageX) => {
+      if (!isDragging) return;
+      const delta = pageX - startX;
+      if (Math.abs(delta) > 4) moved = true;
+      track.scrollLeft = startScroll - delta;
+    };
+    const endDrag = () => {
+      isDragging = false;
+      track.classList.remove('dragging');
+    };
+
+    track.addEventListener('pointerdown', (e) => {
+      startDrag(e.pageX);
+      track.setPointerCapture(e.pointerId);
+    });
+    track.addEventListener('pointermove', (e) => duringDrag(e.pageX));
+    track.addEventListener('pointerup', endDrag);
+    track.addEventListener('pointercancel', endDrag);
+    track.addEventListener('pointerleave', endDrag);
+
+    // Evita clicar em algo dentro do card logo após arrastar
+    track.addEventListener('click', (e) => {
+      if (moved) e.preventDefault();
+    }, true);
+
+    const scrollByCard = (direction) => {
+      const card = track.querySelector('.gallery-item');
+      const gap = 20;
+      const distance = card ? card.getBoundingClientRect().width + gap : 300;
+      track.scrollBy({ left: distance * direction, behavior: 'smooth' });
+    };
+
+    if (prevBtn) prevBtn.addEventListener('click', () => scrollByCard(-1));
+    if (nextBtn) nextBtn.addEventListener('click', () => scrollByCard(1));
+  }
+
+  /* ---------- Animação de entrada ao rolar ---------- */
+  const revealEls = document.querySelectorAll('.reveal');
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+    revealEls.forEach(el => observer.observe(el));
+  } else {
+    revealEls.forEach(el => el.classList.add('is-visible'));
+  }
+
+});
